@@ -1,70 +1,89 @@
-# Obsidian ExamPrep Plugin
+# ExamPrep
 
-The **ExamPrep Plugin** for Obsidian is a powerful tool designed for structured, tag-based study sessions within your vault. Use it to select notes based on tags and folders and track your progress on specific questions. This plugin is ideal for anyone looking to use Obsidian as a flashcard or spaced-repetition study tool.
+![ExamPrep Plugin Screenshot](./docs/ExamPrep-preview.png)
 
-## Features
+## What is it?
 
-- Randomly select notes based on tags and folders.
-- Track attempts and correct answers within each note.
-- View progress overviews by tag and note.
-- Integrate with templates for easy setup.
+ExamPrep is an Obsidian plugin designed to help users create structured study sessions with tagged notes. It allows users to select notes based on specific tags, track their attempts and correct answers, and view overall progress summaries.
 
-## Usage
+## Key Highlights
+
+- **Random Note Selection by Tag**: Select notes within a specified folder based on one or more tags.
+  
+  ![Tag Selection Screen](./docs/tag-selection.png)
+
+- **Progress Tracking**: Track your attempts and correct answers within each note. The plugin adds a progress tracker inside the note with buttons to mark answers as Correct or Incorrect.
+
+  ![In-Note Progress Tracker](./docs/in-note-tracker.png)
+
+- **Progress Overview**: View comprehensive progress summaries by tag and note. This overview helps you quickly see which areas you need to focus on.
+
+  ![Progress Overview](./docs/progress-overview.png)
+
+- **Template Integration**: Easily create new study notes with templates that include the progress tracker code block.
+
+## How to Use
 
 ### Setting Up Your Notes and Folder
 
-- **Create a Folder**: Organize your notes by creating a dedicated folder for study materials or questions, such as `/StudyNotes/`.
-- **Tag Your Notes**: Inside each note you want to track, add tags related to the topic or difficulty level (e.g., `#math`, `#easy`, or `#review`).
-- **Add the Plugin's Placeholder Code Block**: To enable tracking for a note, add the following code block inside your note:
+1. **Create a Study Folder**: Organize your study materials by creating a dedicated folder for them, such as `/StudyNotes/`.
   
-  progress-tracker
+2. **Tag Your Notes**: Add tags to each note that you want to track. Tags can represent topics, difficulty levels, or anything relevant to your study sessions (e.g., `#math`, `#easy`, `#review`).
 
-  This block will display your current stats and answer buttons. **Note:** You must be in **View Mode** for the plugin's buttons and statistics to appear.
+3. **Add the Progress Tracker Code Block**: To enable tracking within a note, add the following code block inside each note:
 
-### Starting a Session
+   \```progress-tracker
 
-- Click on the dice icon in the left ribbon to start a session.
+   This code block activates the progress tracker, where you’ll see buttons to mark attempts as correct or incorrect. **Note:** Make sure to be in **View Mode** to interact with the progress tracker.
 
-  ![Dice Icon to Start Session](https://your-image-link.com/dice-icon.png)
+### Starting a Study Session
+
+- Click on the dice icon in the left ribbon to start a study session with ExamPrep.
+
+  ![Dice Icon to Start Session](./docs/dice-icon.png)
 
 ### Select Folder and Tags
 
-- **Choose a Folder**: Select the folder where your tagged notes are located.
-- **Select Tags**: Choose one or more tags to filter the notes. You can view all tags and their progress status within the folder.
-
-  ![Tag Selection Screen](https://your-image-link.com/tag-selection.png)
+- **Choose a Folder**: Select the folder where your study notes are located.
   
-  *This screen lets you select tags and view progress overviews before starting a session.*
+- **Select Tags**: Filter notes by selecting one or more tags from the available options. ExamPrep will display progress summaries for each tag, helping you track your overall progress.
 
-- **Start Practice**: Once at least one tag is selected, click **Start Practice** to begin the session.
+- **Start Practice**: Once you've selected a folder and at least one tag, click **Start Practice** to begin.
 
-### Answering Questions
+### Answering Questions and Tracking Progress
 
-- When a note opens, use the **Correct** or **Incorrect** buttons in the progress tracker to record your answer.
-- After marking your answer, the plugin will automatically open the next note based on your progress (preferring notes with fewer correct attempts).
+- As each note opens, use the **Correct** or **Incorrect** buttons to track your answer.
+- The plugin automatically opens the next note based on your progress (prioritizing notes with fewer correct attempts).
+- To view your progress, refer to the **Tag Progress Overview** and **Note Progress Overview** at the start of each session.
 
-  ![In-Note Progress Tracker](https://your-image-link.com/in-note-tracker.png)
-  
-  *The progress tracker inside a note with Correct/Incorrect buttons and stats display.*
+### Integrating with Templates
 
-### Tracking Progress
-
-- The plugin displays two progress overviews before you start a session:
-  - **Tag Progress Overview**: Shows total attempts and correct answers per tag.
-  - **Note Progress Overview**: Displays each note's individual progress, including attempts and correct answers.
-- These overviews help you understand which tags or notes need more practice.
-
-  ![Progress Overview](https://your-image-link.com/progress-overview.png)
-  
-  *The Tag and Note Progress Overviews help you keep track of your study progress.*
-
-### Template Integration
-
-To streamline your note creation, you can create a template that includes the plugin's code block. For example, if you use the [Templates Plugin](https://help.obsidian.md/Plugins/Templates), create a template file containing:
+To make it easy to add new study notes, you can set up a template that includes the progress tracker code block. Using the [Templates Plugin](https://help.obsidian.md/Plugins/Templates), create a template with the following structure:
 
 
+```md
+---
+tags: #yourTag
+---
 
-Now, every time you create a new note using this template, the note will be pre-configured for tracking with the ExamPrep Plugin. 
+# Question Title
+
+
+\```progress-tracker
+<!-- Additional content, such as the question or prompt -->
+```
+
+With this setup, each new note created with the template will automatically include the progress tracker and tag configuration.
+
+## Development
+
+To customize this project for your needs, clone it and then install all dependencies:
+
+```sh
+git clone https://github.com/yourusername/ExamPrep
+cd ExamPrep
+npm install
+```
 
 ## Important Notes
 
