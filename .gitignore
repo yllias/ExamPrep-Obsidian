@@ -1,0 +1,44 @@
+# Existing Ignores for Node Modules and Lock Files
+node_modules/
+package-lock.json
+yarn.lock
+
+# Logs
+*.log
+
+# Compiled JavaScript and Map Files
+*.js.map
+*.d.ts
+*.js
+
+# TypeScript Build Cache Files
+*.tsbuildinfo
+
+# Temporary and System Files
+.DS_Store
+Thumbs.db
+
+# Editor and Environment-Specific Files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Obsidian Plugin Specific Files
+# Exclude other JSON files except for manifest.json
+data.json
+!manifest.json
+
+# Version and Configuration Scripts (Optional)
+version-bump.mjs
+versions.json
+
+# ESLint and EditorConfig (for development only, can be removed if needed)
+.eslintrc
+.eslintignore
+.editorconfig
+
+# npm configuration (Optional, include if used)
+.npmrc
