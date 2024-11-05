@@ -62,15 +62,14 @@ To make it easy to add new study notes, you can set up a template that includes 
 
 
 ```md
----
-tags: #yourTag
----
+#tag1 #tag2 #tag3
 
-# Question Title
+##### Question: 
+<!-- Additional content, such as the question, a screenshot of the exercise etc. -->
+##### Solution: 
+<!-- Additional content, such as the solution, a screenshot of the exercise etc. -->
 
-
-\```progress-tracker
-<!-- Additional content, such as the question or prompt -->
+```progress-tracker
 ```
 
 With this setup, each new note created with the template will automatically include the progress tracker and tag configuration.
@@ -80,7 +79,7 @@ With this setup, each new note created with the template will automatically incl
 To customize this project for your needs, clone it and then install all dependencies:
 
 ```sh
-git clone https://github.com/yourusername/ExamPrep
+git clone https://github.com/yllias/ExamPrep-Obsidian
 cd ExamPrep
 npm install
 ```
