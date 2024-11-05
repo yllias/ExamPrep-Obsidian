@@ -1,6 +1,6 @@
-# Obsidian Random Tagged Note Plugin
+# Obsidian ExamPrep Plugin
 
-The **Random Tagged Note Plugin** for Obsidian is a powerful tool designed for structured, tag-based study sessions within your vault. Use it to select notes based on tags and folders and track your progress on specific questions. This plugin is ideal for anyone looking to use Obsidian as a flashcard or spaced-repetition study tool.
+The **ExamPrep Plugin** for Obsidian is a powerful tool designed for structured, tag-based study sessions within your vault. Use it to select notes based on tags and folders and track your progress on specific questions. This plugin is ideal for anyone looking to use Obsidian as a flashcard or spaced-repetition study tool.
 
 ## Features
 
@@ -62,17 +62,9 @@ The **Random Tagged Note Plugin** for Obsidian is a powerful tool designed for s
 
 To streamline your note creation, you can create a template that includes the plugin's code block. For example, if you use the [Templates Plugin](https://help.obsidian.md/Plugins/Templates), create a template file containing:
 
----
-tags: #yourTag
----
 
-# Question Title
 
-progress-tracker
-
-<!-- Additional content, such as the question or prompt -->
-
-Now, every time you create a new note using this template, the note will be pre-configured for tracking with the Random Tagged Note Plugin.
+Now, every time you create a new note using this template, the note will be pre-configured for tracking with the ExamPrep Plugin. 
 
 ## Important Notes
 
