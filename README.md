@@ -33,7 +33,7 @@ ExamPrep is an Obsidian plugin designed to help users create structured study se
 3. **Add the Progress Tracker Code Block**: To enable tracking within a note, add the following code block inside each note:
 
 ```md
-   \```progress-tracker
+   ```progress-tracker
 ```
    This code block activates the progress tracker, where you’ll see buttons to mark attempts as correct or incorrect. **Note:** Make sure to be in **View Mode** to interact with the progress tracker.
 
