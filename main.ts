@@ -14,6 +14,7 @@ import {
 interface RandomTaggedNoteSettings {
     folder: string;
     progress: Record<string, NoteProgress>;
+    activeSession: PracticeSession | null;
 }
 
 interface NoteProgress {
@@ -35,14 +36,21 @@ interface PracticeSession {
     lastFilePath: string;
 }
 
+interface SessionStats {
+    questionsAttempted: { noteName: string; correct: boolean }[];
+}
+
 const DEFAULT_SETTINGS: RandomTaggedNoteSettings = {
     folder: '',
     progress: {},
+    activeSession: null,
 };
 
 export default class RandomTaggedNotePlugin extends Plugin {
     settings: RandomTaggedNoteSettings;
     session: PracticeSession | null = null; // Store the session data
+    private tagCache = new Map<string, string[]>();
+    private statusBarItem: HTMLElement;
 
     async onload() {
         await this.loadSettings();
@@ -50,13 +58,19 @@ export default class RandomTaggedNotePlugin extends Plugin {
         // Register Markdown code block processor
         this.registerMarkdownCodeBlockProcessor('progress-tracker', this.progressTrackerProcessor.bind(this));
 
-        // Add ribbon icon for random note
-        this.addRibbonIcon('dice', 'Start Practice Session', () => {
+        const ribbonIcon = this.addRibbonIcon('dice', 'Practice Session', () => {
             this.showSelectionModal();
         });
+        
+        const indicator = ribbonIcon.createEl('div', {
+            cls: 'session-indicator',
+            attr: { style: 'display: none;' }
+        });
 
-        // Add settings tab
         this.addSettingTab(new RandomTaggedNoteSettingTab(this.app, this));
+
+        this.statusBarItem = this.addStatusBarItem();
+        this.statusBarItem.hide();
     }
 
     async loadSettings() {
@@ -67,8 +81,17 @@ export default class RandomTaggedNotePlugin extends Plugin {
         await this.saveData(this.settings);
     }
 
-    // Function to show the folder selection modal
     showSelectionModal() {
+        this.updateStatusBar();
+        const ribbonIcon = this.addRibbonIcon('dice', 'Practice Session', () => {
+            this.showSelectionModal();
+        });
+        ribbonIcon.querySelector('.session-indicator')?.toggleAttribute('style', this.session ? 'display: block;' : 'display: none;');
+        
+        this.session = null;
+        this.updateStatusBar();
+        ribbonIcon.querySelector('.session-indicator')?.setAttribute('style', 'display: none;');
+
         new FolderSelectionModal(this.app, this, async (folder) => {
             // Initialize session
             this.session = {
@@ -76,8 +99,9 @@ export default class RandomTaggedNotePlugin extends Plugin {
                 currentTags: [],
                 lastFilePath: '',
             };
+            this.settings.activeSession = this.session;
+            await this.saveSettings();
 
-            // Get tags within the selected folder
             const folderObj = folder === '/'
                 ? this.app.vault.getRoot()
                 : this.app.vault.getAbstractFileByPath(folder);
@@ -96,7 +120,6 @@ export default class RandomTaggedNotePlugin extends Plugin {
                 return;
             }
 
-            // Show tag selection modal
             new TagSelectionModal(this.app, this, folderObj, tagsInFolder, (selectedTags) => {
                 if (selectedTags.length === 0) {
                     new Notice('Please select at least one tag');
@@ -104,14 +127,18 @@ export default class RandomTaggedNotePlugin extends Plugin {
                     return;
                 }
                 this.session!.currentTags = selectedTags;
-                // Proceed to start the practice session
                 this.showRandomNote();
             }).open();
         }).open();
     }
 
-    // Function to get all tags within a folder
+    // Get all tags within a folder
     async getTagsInFolder(folder: TFolder): Promise<string[]> {
+        const cacheKey = folder.path;
+        if (this.tagCache.has(cacheKey)) {
+            return this.tagCache.get(cacheKey)!;
+        }
+
         const tags = new Set<string>();
         const files = await this.getAllNotesInFolder(folder);
 
@@ -120,10 +147,11 @@ export default class RandomTaggedNotePlugin extends Plugin {
             fileTags.forEach((tag) => tags.add(tag));
         }
 
+        this.tagCache.set(cacheKey, Array.from(tags));
         return Array.from(tags).sort();
     }
 
-    // Function to get all notes in a folder
+    // Get all notes in a folder
     async getAllNotesInFolder(folder: TFolder): Promise<TFile[]> {
         const files: TFile[] = [];
         const traverseFolder = (folder: TFolder) => {
@@ -187,7 +215,6 @@ export default class RandomTaggedNotePlugin extends Plugin {
             return;
         }
 
-        // Filter out the last file if necessary
         const notesExcludingLast = notes.filter((note) => note.path !== this.session!.lastFilePath);
 
         // Find the minimum number of correct attempts among the notes
@@ -208,7 +235,6 @@ export default class RandomTaggedNotePlugin extends Plugin {
         // Randomly select one of the candidate notes
         const nextNote = candidateNotes[Math.floor(Math.random() * candidateNotes.length)];
 
-        // Update last file path
         this.session.lastFilePath = nextNote.path;
 
         await this.app.workspace.getLeaf().openFile(nextNote);
@@ -230,8 +256,6 @@ export default class RandomTaggedNotePlugin extends Plugin {
 
         return matchingNotes;
     }
-
-    // Markdown post-processor to inject buttons and stats into the note
     progressTrackerProcessor(source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) {
         const plugin = this; // Store a reference to the plugin instance
         const file = plugin.app.vault.getAbstractFileByPath(ctx.sourcePath);
@@ -246,13 +270,10 @@ export default class RandomTaggedNotePlugin extends Plugin {
             lastAttempt: null,
         };
 
-        // Create container
         const container = el.createDiv({ cls: 'progress-tracker-container' });
 
-        // Create buttons
         const buttonContainer = container.createDiv({ cls: 'button-container' });
 
-        // Correct button
         new ButtonComponent(buttonContainer)
             .setButtonText('Correct')
             .setIcon('check')
@@ -320,7 +341,23 @@ export default class RandomTaggedNotePlugin extends Plugin {
                 .progress-bar-incorrect {
                     background-color: red;
                 }
+                .number-cell {
+                    text-align: center;
+                }
             `,
+        });
+
+        document.addEventListener('keydown', async (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                await plugin.updateProgress(file, true);
+                plugin.updateStatsDisplay(file, statsContainer);
+                await plugin.showRandomNote();
+            }
+            if (e.ctrlKey && e.key === 'Backspace') {
+                await plugin.updateProgress(file, false);
+                plugin.updateStatsDisplay(file, statsContainer);
+                await plugin.showRandomNote();
+            }
         });
     }
 
@@ -378,6 +415,15 @@ export default class RandomTaggedNotePlugin extends Plugin {
             },
         });
     }
+
+    private updateStatusBar() {
+        if (this.session) {
+            this.statusBarItem.setText(`📚 Active session: ${this.session.currentFolder}`);
+            this.statusBarItem.show();
+        } else {
+            this.statusBarItem.hide();
+        }
+    }
 }
 
 // Modal to select folder
@@ -429,7 +475,6 @@ class FolderSelectionModal extends Modal {
                 }
             });
 
-        // Add buttons
         new Setting(contentEl)
             .addButton((btn) =>
                 btn
@@ -486,13 +531,26 @@ class TagSelectionModal extends Modal {
         const { contentEl } = this;
         contentEl.empty();
 
+        // Header and instructions
         contentEl.createEl('h2', { text: 'Select Tags' });
         contentEl.createEl('p', { text: 'Click on tags to select or deselect them.' });
 
+        // Search input with spacing
+        const searchInput = contentEl.createEl('input', {
+            type: 'text',
+            placeholder: 'Search tags...',
+            cls: 'tag-search-input'
+        });
+
+        // Tags container
         const tagsContainer = contentEl.createDiv({ cls: 'tags-container' });
 
+        // Populate tags
         this.tagsInFolder.forEach((tag) => {
-            const tagElement = tagsContainer.createSpan({ cls: 'tag-item', text: tag });
+            const tagElement = tagsContainer.createSpan({
+                cls: 'tag-item',
+                text: tag
+            });
             tagElement.addEventListener('click', () => {
                 if (this.selectedTags.has(tag)) {
                     this.selectedTags.delete(tag);
@@ -506,18 +564,12 @@ class TagSelectionModal extends Modal {
             });
         });
 
-        // Containers for overviews
-        await this.displayTagProgressOverview(contentEl);
-        await this.displayNoteProgressOverview(contentEl);
-
-        // Add buttons
         new Setting(contentEl)
             .addButton((btn) =>
                 btn
                     .setButtonText('Back')
                     .onClick(() => {
                         this.close();
-                        // Restart the selection process
                         this.plugin.showSelectionModal();
                     })
             )
@@ -533,18 +585,23 @@ class TagSelectionModal extends Modal {
                         this.onSubmit(Array.from(this.selectedTags));
                         this.close();
                     });
-
-                btn.setDisabled(true); // Disabled until a tag is selected
+                btn.setDisabled(true);
             });
 
-        // Add styles
+        // Progress overviews
+        await this.displayTagProgressOverview(contentEl);
+        await this.displayNoteProgressOverview(contentEl);
+
         contentEl.createEl('style', {
             text: `
+                .tag-search-input {
+                    width: 100%;
+                    margin: 1em 0 1.5em 0;
+                    padding: 0.5em;
+                }
                 .tags-container {
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 0.5em;
-                    margin-bottom: 1em;
+                    gap: 0.8em;
+                    margin-bottom: 2em;
                 }
                 .tag-item {
                     padding: 0.5em 1em;
@@ -593,7 +650,15 @@ class TagSelectionModal extends Modal {
                     background-color: green;
                     transition: width 0.3s ease;
                 }
-            `,
+            `
+        });
+
+        // Search input event listener
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = (e.target as HTMLInputElement).value.toLowerCase();
+            tagsContainer.findAll('.tag-item').forEach((el: HTMLElement) => {
+                el.toggle(el.textContent.toLowerCase().includes(searchTerm));
+            });
         });
     }
 
@@ -683,7 +748,6 @@ class TagSelectionModal extends Modal {
 
             const row = notesTableBody.createEl('tr');
             row.createEl('td', { text: note.basename });
-
             row.createEl('td', { text: progress.attempts.toString() });
             row.createEl('td', { text: progress.correctAnswers.toString() });
 
@@ -736,5 +800,24 @@ class RandomTaggedNoteSettingTab extends PluginSettingTab {
                         await this.plugin.saveSettings();
                     })
             );
+    }
+}
+
+class SessionSummaryModal extends Modal {
+    constructor(app: App, private stats: SessionStats) {
+        super(app);
+    }
+
+    onOpen() {
+        const { contentEl } = this;
+        contentEl.createEl('h2', { text: 'Session Summary' });
+
+        // Add detailed stats table
+        const statsTable = contentEl.createEl('table');
+        this.stats.questionsAttempted.forEach(question => {
+            const row = statsTable.createEl('tr');
+            row.createEl('td', { text: question.noteName });
+            row.createEl('td', { text: `${question.correct ? '✅' : '❌'}` });
+        });
     }
 }
